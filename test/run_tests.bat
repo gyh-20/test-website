@@ -102,13 +102,9 @@ echo.
 echo ========================================
 echo    Frontend UI Tests
 echo ========================================
-
-if not defined ANTHROPIC_API_KEY (
-    echo [WARNING] ANTHROPIC_API_KEY not set
-    echo AI vision analysis will be skipped
-    echo Set it with: set ANTHROPIC_API_KEY=your_key
-    echo.
-)
+echo [INFO] Using AI API: Qwen2.5-VL-72B-Instruct
+echo [INFO] API URL: https://llmapi.paratera.com
+echo.
 
 python frontend_ui_test.py
 set FRONTEND_RESULT=%errorlevel%

@@ -120,13 +120,9 @@ echo ""
 echo -e "${BLUE}========================================${NC}"
 echo -e "${BLUE}   Frontend UI Tests                   ${NC}"
 echo -e "${BLUE}========================================${NC}"
-
-if [ -z "$ANTHROPIC_API_KEY" ]; then
-    echo -e "${YELLOW}Warning: ANTHROPIC_API_KEY not set${NC}"
-    echo -e "${YELLOW}AI vision analysis will be skipped${NC}"
-    echo -e "${YELLOW}Set it with: export ANTHROPIC_API_KEY=your_key${NC}"
-    echo ""
-fi
+echo -e "${BLUE}AI API: Qwen2.5-VL-72B-Instruct${NC}"
+echo -e "${BLUE}API URL: https://llmapi.paratera.com${NC}"
+echo ""
 
 python frontend_ui_test.py
 

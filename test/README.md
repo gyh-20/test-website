@@ -1,6 +1,6 @@
 # Automated Test Suite
 
-This directory contains automated tests for the Login/Registration application, including both backend API tests and frontend UI tests with AI vision analysis.
+This directory contains automated tests for Login/Registration application, including both backend API tests and frontend UI tests with AI vision analysis.
 
 ## Test Structure
 
@@ -18,21 +18,9 @@ test/
 ## Prerequisites
 
 1. **Python 3.8+**
-2. **ANTHROPIC API Key** (for AI vision analysis) - Optional but recommended
+2. **AI API Key** (for AI vision analysis) - Built-in, no configuration needed
 
-   Get your API key from https://console.anthropic.com/
-
-   Set it as environment variable:
-   ```bash
-   # Linux/Mac
-   export ANTHROPIC_API_KEY=your_api_key_here
-
-   # Windows CMD
-   set ANTHROPIC_API_KEY=your_api_key_here
-
-   # Windows PowerShell
-   $env:ANTHROPIC_API_KEY="your_api_key_here"
-   ```
+   The tests use the built-in AI API (https://llmapi.paratera.com) with the Qwen2.5-VL-72B-Instruct model for vision analysis.
 
 ## Running Tests
 
@@ -110,25 +98,67 @@ python frontend_ui_test.py
 
 ## AI Vision Analysis
 
-The frontend tests use Claude Vision (via Anthropic API) to analyze screenshots for:
+The frontend tests use AI Vision API (Qwen2.5-VL-72B-Instruct) to analyze screenshots for:
 
 - **Error messages** - Detects red error text, error banners, and validation messages
 - **Success states** - Identifies welcome messages, green success indicators
 - **Page state** - Determines if on login, registration, or welcome screen
 
+### Configuration
+
+The tests use these default settings (built-in, no need to configure):
+
+```python
+API_URL = "https://llmapi.paratera.com"
+API_MODEL = "Qwen2.5-VL-72B-Instruct"
+```
+
+You can override these with environment variables:
+
+```bash
+# Windows CMD
+set AI_API_KEY=your_api_key
+set AI_API_URL=https://your-api-url.com
+set AI_MODEL=your-model-name
+
+# Windows PowerShell
+$env:AI_API_KEY="your_api_key"
+$env:AI_API_URL="https://your-api-url.com"
+$env:AI_MODEL="your-model-name"
+
+# Linux/Mac
+export AI_API_KEY=your_api_key
+export AI_API_URL=https://your-api-url.com
+export AI_MODEL=your-model-name
+```
+
 ### How It Works
 
 1. Playwright captures screenshots at each test step
-2. Screenshots are sent to Claude Vision API
-3. AI analyzes the image for specific UI elements
-4. Test assertions verify expected error/success messages
+2. Screenshots are encoded to base64
+3. Sent to AI API with analysis prompt
+4. AI analyzes image for specific UI elements
+5. Test assertions verify expected error/success messages
 
-### Without API Key
+### Alternative Vision Models
 
-If `ANTHROPIC_API_KEY` is not set, tests will still run but skip AI analysis:
-- Screenshots are still captured
-- Tests check DOM elements directly (text content, element visibility)
-- Warnings are displayed in output
+The following vision-capable models are available from the API:
+
+- `Qwen2.5-VL-72B-Instruct` (default)
+- `Qwen3-VL-30B-A3B-Instruct-2507`
+- `Qwen3-VL-235B-A22B-Instruct`
+- `Qwen2.5-VL-3B-Instruct`
+- `Qwen2.5-VL-32B-Instruct`
+- `Qwen3-VL-30B-A3B-Thinking`
+- `Qwen3-VL-235B-A22B-Thinking-2507`
+- `GLM-4.6V`
+- `GLM-4V-Flash`
+- `GLM-4V-Plus-0111`
+- `DeepSeek-OCR`
+- `PaddleOCR-VL-0.9`
+- `PaddleOCR-VL-1.5`
+
+To use a different model, set the `AI_MODEL` environment variable.
 
 ## Test Output
 
@@ -164,6 +194,8 @@ test_backend_api.py::TestBackendAPI::test_1_unregistered_user_login PASSED
    Frontend UI Tests
 ============================================================
 ...
+🤖 AI Analysis: {"has_error": true, "error_message": "User not found", ...}
+
 ============================================================
    Test Summary
 ============================================================
@@ -214,16 +246,17 @@ Error: Executable doesn't exist at /path/to/chromium
 playwright install chromium
 ```
 
-### Anthropic API Errors
+### AI API Errors
 
 ```
 Error: 401 Unauthorized
+Error: API request failed: 401
 ```
 
-**Solution:** Verify your API key:
+**Solution:** Check your API key configuration:
 ```bash
-echo $ANTHROPIC_API_KEY  # Check if set
-export ANTHROPIC_API_KEY=sk-ant-xxxxx  # Set correct key
+# Verify environment variable (if custom)
+echo $AI_API_KEY
 ```
 
 ### Frontend Tests Time Out
@@ -288,7 +321,6 @@ requests==2.31.0       # HTTP client for backend tests
 pytest==7.4.3           # Test framework
 pytest-asyncio==0.21.1  # Async support for pytest
 playwright==1.40.0      # Browser automation
-anthropic==0.18.0       # Anthropic API for AI vision
 ```
 
 ## Security Notes

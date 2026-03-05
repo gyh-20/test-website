@@ -72,6 +72,7 @@ Starting Flask server on http://localhost:5000
 Endpoints:
   POST /register  - Register a new user
   POST /login     - Authenticate a user
+  POST /reset_users - Reset user database (testing only)
 ```
 
 ### Open the Frontend
@@ -147,17 +148,19 @@ or
 }
 ```
 
+### POST /reset_users
+
+Resets the user database (for testing only).
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Users reset"
+}
+```
+
 ## Testing
-
-### Manual Testing
-
-1. Ensure the backend is running (`python backend/app.py`)
-2. Open `frontend/index.html` in your browser
-3. Test the three main scenarios:
-   - Try logging in with unregistered credentials
-   - Register a new user
-   - Log in with correct credentials
-   - Log in with incorrect password
 
 ### Automated Testing
 
@@ -186,26 +189,42 @@ The test suite will:
 
 #### Frontend AI Vision Testing
 
-The frontend tests use Claude Vision to analyze screenshots and verify:
+The frontend tests use AI Vision (Qwen2.5-VL-72B-Instruct via https://llmapi.paratera.com) to analyze screenshots and verify:
 - Error messages are displayed correctly (red text, error banners)
 - Success states show proper UI (welcome message, green indicators)
 - Page transitions work as expected
 
-To enable AI vision analysis, set your Anthropic API key:
-```bash
-# Windows CMD
-set ANTHROPIC_API_KEY=your_api_key_here
+**Configuration:**
+- API URL: `https://llmapi.paratera.com`
+- Model: `Qwen2.5-VL-72B-Instruct`
+- API Key: Built-in (no configuration needed)
 
-# Windows PowerShell
-$env:ANTHROPIC_API_KEY="your_api_key_here"
+You can override these with environment variables:
+```bash
+# Windows
+set AI_API_KEY=your_key
+set AI_API_URL=your_url
+set AI_MODEL=your_model
 
 # Linux/Mac
-export ANTHROPIC_API_KEY=your_api_key_here
+export AI_API_KEY=your_key
+export AI_API_URL=your_url
+export AI_MODEL=your_model
 ```
 
 See [test/README.md](test/README.md) for more details on automated testing.
 
-#### Manual API Testing (curl)
+### Manual Testing
+
+1. Ensure the backend is running (`python backend/app.py`)
+2. Open `frontend/index.html` in your browser
+3. Test the three main scenarios:
+   - Try logging in with unregistered credentials
+   - Register a new user
+   - Log in with correct credentials
+   - Log in with incorrect password
+
+### Manual API Testing (curl)
 
 Make sure the backend is running, then execute:
 
@@ -268,3 +287,7 @@ All test cases from `TESTCASES.md` have been verified:
 **TypeScript compilation issues:**
 - Ensure TypeScript is installed: `tsc --version`
 - Check that `tsconfig.json` exists in the frontend directory
+
+**Tests fail with AI API errors:**
+- Check that the AI API is accessible: `curl https://llmapi.paratera.com`
+- Verify network connection to the API server

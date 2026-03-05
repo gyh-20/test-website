@@ -4,16 +4,22 @@ Tests the frontend using Playwright with AI vision for error detection
 """
 import asyncio
 import os
+import base64
+import json
+import re
 from datetime import datetime
 from playwright.async_api import async_playwright
-from anthropic import Anthropic
 
 
 # Configuration
 FRONTEND_URL = "http://localhost:8000"
 SCREENSHOT_DIR = "test/screenshots"
-ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
-client = Anthropic(api_key=ANTHROPIC_API_KEY) if ANTHROPIC_API_KEY else None
+
+# API Configuration
+API_KEY = os.environ.get("AI_API_KEY", "sk-S5Ii_8ha06_YSq_fhj3_-Q")
+API_URL = os.environ.get("AI_API_URL", "https://llmapi.paratera.com")
+# Using Qwen2.5-VL-72B-Instruct for vision analysis
+AI_MODEL = os.environ.get("AI_MODEL", "Qwen2.5-VL-72B-Instruct")
 
 
 def take_screenshot(page, name):
@@ -26,21 +32,24 @@ def take_screenshot(page, name):
 
 def analyze_screenshot_with_ai(screenshot_path):
     """
-    Use Claude Vision to analyze screenshot for error messages
+    Use AI Vision API to analyze screenshot for error messages
     Returns: (has_error: bool, error_message: str)
     """
-    if not client:
-        print("⚠️  ANTHROPIC_API_KEY not set, skipping AI analysis")
-        return False, ""
-
     try:
+        # Read and encode image
         with open(screenshot_path, "rb") as f:
             image_data = f.read()
+        base64_image = base64.b64encode(image_data).decode('utf-8')
 
-        response = client.messages.create(
-            model="claude-3-5-sonnet-20241022",
-            max_tokens=1024,
-            messages=[
+        # Prepare the API request
+        headers = {
+            "Authorization": f"Bearer {API_KEY}",
+            "Content-Type": "application/json"
+        }
+
+        payload = {
+            "model": AI_MODEL,
+            "messages": [
                 {
                     "role": "user",
                     "content": [
@@ -63,36 +72,66 @@ Respond in this JSON format:
 """
                         },
                         {
-                            "type": "image",
-                            "source": {
-                                "type": "base64",
-                                "media_type": "image/png",
-                                "data": image_data.hex()[:999999]  # Convert hex and truncate if needed
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/png;base64,{base64_image}"
                             }
                         }
                     ]
                 }
-            ]
+            ],
+            "max_tokens": 1024,
+            "temperature": 0.1
+        }
+
+        # Make API request
+        import requests
+        response = requests.post(
+            f"{API_URL}/v1/chat/completions",
+            headers=headers,
+            json=payload,
+            timeout=30
         )
 
-        content = response.content[0].text
+        if response.status_code != 200:
+            print(f"⚠️  API request failed: {response.status_code} - {response.text}")
+            return False, ""
 
-        # Parse the response (simple parsing - in production use proper JSON parsing)
-        has_error = "has_error\": true" in content.lower()
-        has_success = "has_success\": true" in content.lower()
+        result = response.json()
 
-        # Extract error message
-        if "error_message" in content:
-            import re
-            match = re.search(r'"error_message":\s*"([^"]+)"', content)
-            if match:
-                error_msg = match.group(1)
+        # Extract the AI response
+        content = result.get("choices", [{}])[0].get("message", {}).get("content", "")
+
+        print(f"  🤖 AI Analysis: {content[:200]}...")
+
+        # Parse JSON from response (handle cases where AI wraps in markdown)
+        json_match = re.search(r'\{[^{}]*"[^"]*has_error"[^{}]*\}', content, re.DOTALL)
+        if json_match:
+            try:
+                parsed = json.loads(json_match.group())
+                has_error = parsed.get("has_error", False)
+                error_msg = parsed.get("error_message", "")
                 return has_error, error_msg
+            except json.JSONDecodeError:
+                pass
+
+        # Fallback: simple keyword matching
+        has_error = any(
+            keyword in content.lower()
+            for keyword in ["error", "failed", "incorrect", "not found", "already exists"]
+        )
+
+        # Try to extract error message
+        error_msg_match = re.search(r'error.?message[":\s]+["\']?([^"\'\n]+)', content, re.IGNORECASE)
+        if error_msg_match:
+            return has_error, error_msg_match.group(1).strip()
 
         return has_error, ""
 
     except Exception as e:
         print(f"⚠️  AI analysis failed: {e}")
+        import traceback
+        traceback.print_exc()
         return False, ""
 
 
@@ -100,6 +139,9 @@ async def test_frontend_ui():
     """Main frontend test function"""
     print("=" * 60)
     print("Starting Frontend UI Tests")
+    print("=" * 60)
+    print(f"API URL: {API_URL}")
+    print(f"Model: {AI_MODEL}")
     print("=" * 60)
 
     async with async_playwright() as p:
