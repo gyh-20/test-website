@@ -7,6 +7,7 @@ import os
 import base64
 import json
 import re
+import time
 from datetime import datetime
 from playwright.async_api import async_playwright
 
@@ -30,7 +31,8 @@ def take_screenshot(page, name):
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"{SCREENSHOT_DIR}/{name}_{timestamp}.png"
-    page.screenshot(path=filename)
+    # Screenshot is async, must await it
+    await page.screenshot(path=filename)
     return filename
 
 
@@ -41,13 +43,12 @@ def analyze_screenshot_with_ai(screenshot_path):
     """
     try:
         # Wait for file to exist and be readable
-        import time
         for _ in range(10):  # Wait up to 1 second for file to be ready
             if os.path.exists(screenshot_path):
                 try:
                     with open(screenshot_path, "rb") as f:
                         f.read(1)  # Try to read 1 byte to verify file is ready
-                    break
+                        break
                 except (IOError, OSError):
                     pass
             time.sleep(0.1)
@@ -171,14 +172,14 @@ async def test_frontend_ui():
         print("\n[Test 1] Verifying login form display...")
         await page.goto(FRONTEND_URL)
         await page.wait_for_load_state("networkidle")
-        screenshot_path = take_screenshot(page, "01_login_form")
+        screenshot_path = await take_screenshot(page, "01_login_form")
         has_error, error_msg = analyze_screenshot_with_ai(screenshot_path)
 
         if not has_error:
-            print("  ✅ Login form displayed correctly")
+            print("  ✅ PASS - Login form displayed correctly")
             test_results.append(("Login form display", True))
         else:
-            print(f"  ❌ Error detected: {error_msg}")
+            print(f"  ❌ FAIL - Error detected: {error_msg}")
             test_results.append(("Login form display", False))
 
         # Test 2: Unregistered user login (Scenario 1)
@@ -189,14 +190,14 @@ async def test_frontend_ui():
 
         # Wait for potential error message
         await page.wait_for_timeout(1000)
-        screenshot_path = take_screenshot(page, "02_unregistered_login")
+        screenshot_path = await take_screenshot(page, "02_unregistered_login")
         has_error, error_msg = analyze_screenshot_with_ai(screenshot_path)
 
         if has_error and ("User not found" in error_msg or "not found" in error_msg.lower()):
-            print(f"  ✅ Error message correctly shown: {error_msg}")
+            print(f"  ✅ PASS - Error message correctly shown: {error_msg}")
             test_results.append(("Unregistered user login", True))
         else:
-            print(f"  ⚠️  Expected 'User not found' error")
+            print(f"  ❌ FAIL - Expected 'User not found' error")
             test_results.append(("Unregistered user login", False))
 
         # Test 3: Switch to registration form
@@ -205,32 +206,32 @@ async def test_frontend_ui():
         await page.wait_for_timeout(500)
         # Wait for registration form to be visible
         await page.wait_for_selector('#registerForm', state='visible')
-        screenshot_path = take_screenshot(page, "03_register_form")
+        screenshot_path = await take_screenshot(page, "03_register_form")
         has_error, error_msg = analyze_screenshot_with_ai(screenshot_path)
 
         if not has_error:
-            print("  ✅ Registration form displayed correctly")
+            print("  ✅ PASS - Registration form displayed correctly")
             test_results.append(("Switch to registration", True))
         else:
-            print(f"  ❌ Error detected: {error_msg}")
+            print(f"  ❌ FAIL - Error detected: {error_msg}")
             test_results.append(("Switch to registration", False))
 
         # Test 4: Register new user (Scenario 4)
         print("\n[Test 4] Registering new user...")
         await page.fill('#registerUsername', 'testuser')
         await page.fill('#registerPassword', 'testpass123')
-        # Click the register form submit button (more specific selector)
+        # Click register form submit button (more specific selector)
         await page.click('#registerForm button[type="submit"]')
         # Wait for registration to complete and form to switch
         await page.wait_for_timeout(2000)
-        screenshot_path = take_screenshot(page, "04_register_success")
+        screenshot_path = await take_screenshot(page, "04_register_success")
         has_error, error_msg = analyze_screenshot_with_ai(screenshot_path)
 
         if not has_error:
-            print("  ✅ Registration successful (no error)")
+            print("  ✅ PASS - Registration successful (no error)")
             test_results.append(("Register new user", True))
         else:
-            print(f"  ❌ Registration failed: {error_msg}")
+            print(f"  ❌ FAIL - Registration failed: {error_msg}")
             test_results.append(("Register new user", False))
 
         # Test 5: Login with correct credentials (Scenario 2)
@@ -240,31 +241,31 @@ async def test_frontend_ui():
         await page.wait_for_timeout(500)
         await page.fill('#loginUsername', 'testuser')
         await page.fill('#loginPassword', 'testpass123')
-        # Click the login form submit button (more specific selector)
+        # Click login form submit button (more specific selector)
         await page.click('#loginForm button[type="submit"]')
         await page.wait_for_timeout(1000)
-        screenshot_path = take_screenshot(page, "05_login_success")
+        screenshot_path = await take_screenshot(page, "05_login_success")
         has_error, error_msg = analyze_screenshot_with_ai(screenshot_path)
 
         if not has_error:
-            print("  ✅ Login successful")
+            print("  ✅ PASS - Login successful")
             test_results.append(("Login with correct credentials", True))
         else:
-            print(f"  ❌ Login failed: {error_msg}")
+            print(f"  ❌ FAIL - Login failed: {error_msg}")
             test_results.append(("Login with correct credentials", False))
 
         # Test 6: Check welcome screen
         print("\n[Test 6] Verifying welcome screen...")
-        screenshot_path = take_screenshot(page, "06_welcome_screen")
+        screenshot_path = await take_screenshot(page, "06_welcome_screen")
         has_error, error_msg = analyze_screenshot_with_ai(screenshot_path)
 
         # Check for "Welcome" text or success state
         welcome_text = await page.text_content('h1')
         if "Welcome" in welcome_text:
-            print(f"  ✅ Welcome screen displayed: {welcome_text}")
+            print(f"  ✅ PASS - Welcome screen displayed: {welcome_text}")
             test_results.append(("Welcome screen", True))
         else:
-            print(f"  ⚠️  Expected 'Welcome' message")
+            print(f"  ❌ FAIL - Expected 'Welcome' message")
             test_results.append(("Welcome screen", False))
 
         # Test 7: Logout and test incorrect password (Scenario 3)
@@ -275,14 +276,14 @@ async def test_frontend_ui():
         await page.fill('#loginPassword', 'wrongpass')
         await page.click('#loginForm button[type="submit"]')
         await page.wait_for_timeout(1000)
-        screenshot_path = take_screenshot(page, "07_incorrect_password")
+        screenshot_path = await take_screenshot(page, "07_incorrect_password")
         has_error, error_msg = analyze_screenshot_with_ai(screenshot_path)
 
         if has_error and ("Incorrect" in error_msg or "password" in error_msg.lower()):
-            print(f"  ✅ Error correctly shown: {error_msg}")
+            print(f"  ✅ PASS - Error correctly shown: {error_msg}")
             test_results.append(("Incorrect password error", True))
         else:
-            print(f"  ⚠️  Expected 'Incorrect password' error")
+            print(f"  ❌ FAIL - Expected 'Incorrect password' error")
             test_results.append(("Incorrect password error", False))
 
         # Test 8: Register with empty fields (Scenario 6)
@@ -293,17 +294,17 @@ async def test_frontend_ui():
         await page.wait_for_selector('#registerForm', state='visible')
         await page.fill('#registerUsername', '')
         await page.fill('#registerPassword', '')
-        # Click the register form submit button (more specific selector)
+        # Click register form submit button (more specific selector)
         await page.click('#registerForm button[type="submit"]')
         await page.wait_for_timeout(1000)
-        screenshot_path = take_screenshot(page, "08_empty_registration")
+        screenshot_path = await take_screenshot(page, "08_empty_registration")
         has_error, error_msg = analyze_screenshot_with_ai(screenshot_path)
 
         if has_error and ("required" in error_msg.lower() or "required" in error_msg):
-            print(f"  ✅ Error correctly shown: {error_msg}")
+            print(f"  ✅ PASS - Error correctly shown: {error_msg}")
             test_results.append(("Empty registration error", True))
         else:
-            print(f"  ⚠️  Expected 'Username and password are required' error")
+            print(f"  ❌ FAIL - Expected 'Username and password are required' error")
             test_results.append(("Empty registration error", False))
 
         await browser.close()
@@ -317,8 +318,8 @@ async def test_frontend_ui():
             print(f"  {status} - {test_name}")
 
         total = len(test_results)
-        passed = sum(1 for _, p in test_results if p)
-        print(f"\nTotal: {passed}/{total} tests passed")
+        passed_count = sum(1 for _, p in test_results if p)
+        print(f"\nTotal: {passed_count}/{total} tests passed")
 
         return all(p for _, p in test_results)
 
