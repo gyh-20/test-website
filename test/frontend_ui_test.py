@@ -13,6 +13,7 @@ from playwright.async_api import async_playwright
 
 # Configuration
 FRONTEND_URL = "http://localhost:8000"
+# Use relative path for screenshots
 SCREENSHOT_DIR = "test/screenshots"
 
 # API Configuration
@@ -24,6 +25,9 @@ AI_MODEL = os.environ.get("AI_MODEL", "Qwen2.5-VL-72B-Instruct")
 
 def take_screenshot(page, name):
     """Take a screenshot and save it"""
+    # Ensure screenshots directory exists
+    os.makedirs(SCREENSHOT_DIR, exist_ok=True)
+
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"{SCREENSHOT_DIR}/{name}_{timestamp}.png"
     page.screenshot(path=filename)
@@ -94,7 +98,7 @@ Respond in this JSON format:
         )
 
         if response.status_code != 200:
-            print(f"⚠️  API request failed: {response.status_code} - {response.text}")
+            print(f"  ⚠️  API request failed: {response.status_code} - {response.text}")
             return False, ""
 
         result = response.json()
@@ -129,7 +133,7 @@ Respond in this JSON format:
         return has_error, ""
 
     except Exception as e:
-        print(f"⚠️  AI analysis failed: {e}")
+        print(f"  ⚠️  AI analysis failed: {e}")
         import traceback
         traceback.print_exc()
         return False, ""
@@ -187,6 +191,8 @@ async def test_frontend_ui():
         print("\n[Test 3] Switching to registration form...")
         await page.click('#showRegister')
         await page.wait_for_timeout(500)
+        # Wait for the registration form to be visible
+        await page.wait_for_selector('#registerForm', state='visible')
         screenshot_path = take_screenshot(page, "03_register_form")
         has_error, error_msg = analyze_screenshot_with_ai(screenshot_path)
 
@@ -201,11 +207,10 @@ async def test_frontend_ui():
         print("\n[Test 4] Registering new user...")
         await page.fill('#registerUsername', 'testuser')
         await page.fill('#registerPassword', 'testpass123')
-        await page.click('button[type="submit"]')
-        # Wait longer for registration to complete and potential alert
+        # Click the register form submit button (more specific selector)
+        await page.click('#registerForm button[type="submit"]')
+        # Wait for registration to complete and form to switch
         await page.wait_for_timeout(2000)
-        # Dismiss any alert that might appear
-        page.on("dialog", lambda dialog: dialog.accept())
         screenshot_path = take_screenshot(page, "04_register_success")
         has_error, error_msg = analyze_screenshot_with_ai(screenshot_path)
 
@@ -223,7 +228,8 @@ async def test_frontend_ui():
         await page.wait_for_timeout(500)
         await page.fill('#loginUsername', 'testuser')
         await page.fill('#loginPassword', 'testpass123')
-        await page.click('button[type="submit"]')
+        # Click the login form submit button (more specific selector)
+        await page.click('#loginForm button[type="submit"]')
         await page.wait_for_timeout(1000)
         screenshot_path = take_screenshot(page, "05_login_success")
         has_error, error_msg = analyze_screenshot_with_ai(screenshot_path)
@@ -255,7 +261,7 @@ async def test_frontend_ui():
         await page.wait_for_timeout(500)
         await page.fill('#loginUsername', 'testuser')
         await page.fill('#loginPassword', 'wrongpass')
-        await page.click('button[type="submit"]')
+        await page.click('#loginForm button[type="submit"]')
         await page.wait_for_timeout(1000)
         screenshot_path = take_screenshot(page, "07_incorrect_password")
         has_error, error_msg = analyze_screenshot_with_ai(screenshot_path)
@@ -271,9 +277,12 @@ async def test_frontend_ui():
         print("\n[Test 8] Testing registration with empty fields...")
         await page.click('#showRegister')
         await page.wait_for_timeout(500)
+        # Wait for the registration form to be visible
+        await page.wait_for_selector('#registerForm', state='visible')
         await page.fill('#registerUsername', '')
         await page.fill('#registerPassword', '')
-        await page.click('button[type="submit"]')
+        # Click the register form submit button (more specific selector)
+        await page.click('#registerForm button[type="submit"]')
         await page.wait_for_timeout(1000)
         screenshot_path = take_screenshot(page, "08_empty_registration")
         has_error, error_msg = analyze_screenshot_with_ai(screenshot_path)
