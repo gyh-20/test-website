@@ -61,7 +61,7 @@ async function handleRegister(event) {
         const result = await response.json();
         if (result.success) {
             // Registration successful - switch to login
-            alert('Registration successful! You can now log in.');
+            // Removed alert to avoid blocking tests
             registerFormElement.reset();
             showForm('login');
         }
