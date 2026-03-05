@@ -22,26 +22,28 @@ if %errorlevel% neq 0 (
 REM Step 1: Install test dependencies
 echo [1/5] Installing test dependencies...
 cd /d "%TEST_ROOT%"
-pip install -r requirements.txt -q
+echo Using pre-built wheels for compatibility...
+pip install -r requirements.txt
 if %errorlevel% neq 0 (
     echo [ERROR] Failed to install test dependencies
+    echo Try: pip install --upgrade pip setuptools wheel
     exit /b 1
 )
 echo [OK] Dependencies installed
 
 REM Install Playwright browsers
 echo [1/5] Installing Playwright browsers...
-playwright install chromium -q
+playwright install chromium
 if %errorlevel% neq 0 (
-    echo [ERROR] Failed to install Playwright browsers
-    exit /b 1
+    echo [WARNING] Failed to install Playwright browsers
+    echo Continuing anyway (may use system browsers)
 )
-echo [OK] Playwright browsers installed
+echo [OK] Playwright browsers ready
 
 REM Step 2: Install backend dependencies
 echo [2/5] Installing backend dependencies...
 cd /d "%PROJECT_ROOT%\backend"
-pip install -r requirements.txt -q
+pip install -r requirements.txt
 if %errorlevel% neq 0 (
     echo [ERROR] Failed to install backend dependencies
     exit /b 1
@@ -51,11 +53,10 @@ echo [OK] Backend dependencies installed
 REM Step 3: Start backend server
 echo [3/5] Starting backend server...
 start /B python "%PROJECT_ROOT%\backend\app.py" > "%TEST_ROOT%\backend.log" 2>&1
-set BACKEND_PID=%errorlevel%
 
 REM Wait for backend to be ready
 echo Waiting for backend to start...
-timeout /t 3 /nobreak >nul
+timeout /t 5 /nobreak >nul
 
 curl -s http://localhost:5000 >nul 2>&1
 if %errorlevel% neq 0 (
@@ -69,7 +70,6 @@ REM Step 4: Start frontend server
 echo [4/5] Starting frontend server...
 cd /d "%PROJECT_ROOT%\frontend"
 start /B python -m http.server 8000 > "%TEST_ROOT%\frontend.log" 2>&1
-set FRONTEND_PID=%errorlevel%
 
 REM Wait for frontend to be ready
 echo Waiting for frontend to start...

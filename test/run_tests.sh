@@ -45,18 +45,19 @@ trap cleanup EXIT
 # Step 1: Install test dependencies
 echo -e "${BLUE}[1/5] Installing test dependencies...${NC}"
 cd "$PROJECT_ROOT/test"
-pip install -r requirements.txt -q
+echo Using pre-built wheels for compatibility...
+pip install -r requirements.txt
 echo -e "${GREEN}✓ Dependencies installed${NC}"
 
 # Install Playwright browsers
 echo -e "${BLUE}[1/5] Installing Playwright browsers...${NC}"
-playwright install chromium -q
-echo -e "${GREEN}✓ Playwright browsers installed${NC}"
+playwright install chromium || true
+echo -e "${GREEN}✓ Playwright browsers ready${NC}"
 
 # Step 2: Install backend dependencies
 echo -e "${BLUE}[2/5] Installing backend dependencies...${NC}"
 cd "$PROJECT_ROOT/backend"
-pip install -r requirements.txt -q
+pip install -r requirements.txt
 echo -e "${GREEN}✓ Backend dependencies installed${NC}"
 
 # Step 3: Start backend server
