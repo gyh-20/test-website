@@ -118,7 +118,7 @@ Respond in this JSON format:
         # Fallback: simple keyword matching
         has_error = any(
             keyword in content.lower()
-            for keyword in ["error", "failed", "incorrect", "not found", "already exists"]
+            for keyword in ["error", "failed", "incorrect", "not found", "already exists", "required"]
         )
 
         # Try to extract error message
@@ -260,6 +260,24 @@ async def test_frontend_ui():
         else:
             print(f"  ⚠️  Expected 'Incorrect password' error")
             test_results.append(("Incorrect password error", False))
+
+        # Test 8: Register with empty fields (Scenario 6)
+        print("\n[Test 8] Testing registration with empty fields...")
+        await page.click('#showRegister')
+        await page.wait_for_timeout(500)
+        await page.fill('#registerUsername', '')
+        await page.fill('#registerPassword', '')
+        await page.click('button[type="submit"]')
+        await page.wait_for_timeout(1000)
+        screenshot_path = take_screenshot(page, "08_empty_registration")
+        has_error, error_msg = analyze_screenshot_with_ai(screenshot_path)
+
+        if has_error and ("required" in error_msg.lower() or "required" in error_msg):
+            print(f"  ✅ Error correctly shown: {error_msg}")
+            test_results.append(("Empty registration error", True))
+        else:
+            print(f"  ⚠️  Expected 'Username and password are required' error")
+            test_results.append(("Empty registration error", False))
 
         await browser.close()
 

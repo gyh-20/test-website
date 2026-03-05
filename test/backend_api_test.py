@@ -99,6 +99,41 @@ class TestBackendAPI:
         assert data["success"] is False
         assert data["message"] == "Username already exists"
 
+    def test_6_register_with_empty_fields(self):
+        """Scenario 6: Register with empty fields"""
+        # Test with empty username and password
+        response = requests.post(
+            f"{BASE_URL}/register",
+            json={"username": "", "password": ""}
+        )
+        data = response.json()
+
+        assert response.status_code == 400
+        assert data["success"] is False
+        assert data["message"] == "Username and password are required"
+
+        # Test with only empty username
+        response = requests.post(
+            f"{BASE_URL}/register",
+            json={"username": "", "password": "test123"}
+        )
+        data = response.json()
+
+        assert response.status_code == 400
+        assert data["success"] is False
+        assert data["message"] == "Username and password are required"
+
+        # Test with only empty password
+        response = requests.post(
+            f"{BASE_URL}/register",
+            json={"username": "testuser", "password": ""}
+        )
+        data = response.json()
+
+        assert response.status_code == 400
+        assert data["success"] is False
+        assert data["message"] == "Username and password are required"
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

@@ -41,6 +41,14 @@
   - System returns HTTP 409 Conflict with `{"success": false, "message": "Username already exists"}`
   - No duplicate user is created
 
+## Scenario 6: Register with Empty Fields
+**Given**: User is on the registration form
+**When**: User submits registration with empty username and/or empty password
+**Then**:
+  - System returns HTTP 400 Bad Request with `{"success": false, "message": "Username and password are required"}`
+  - No user is created
+  - Error message is displayed to user
+
 ## Testing Notes
 
 ### Manual Testing Steps:
@@ -64,4 +72,7 @@ curl -X POST http://localhost:5000/login -H "Content-Type: application/json" -d 
 
 # Scenario 5: Register existing username
 curl -X POST http://localhost:5000/register -H "Content-Type: application/json" -d '{"username":"testuser","password":"anotherpass"}'
+
+# Scenario 6: Register with empty fields
+curl -X POST http://localhost:5000/register -H "Content-Type: application/json" -d '{"username":"","password":""}'
 ```

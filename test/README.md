@@ -12,7 +12,8 @@ test/
 ├── run_tests.sh            # Linux/Mac test runner
 ├── run_tests.bat           # Windows test runner
 ├── screenshots/            # Screenshot storage (generated)
-└── README.md              # This file
+├── README.md              # This file
+└── TROUBLESHOOTING.md    # Troubleshooting guide
 ```
 
 ## Prerequisites
@@ -20,7 +21,7 @@ test/
 1. **Python 3.8+**
 2. **AI API Key** (for AI vision analysis) - Built-in, no configuration needed
 
-   The tests use the built-in AI API (https://llmapi.paratera.com) with the Qwen2.5-VL-72B-Instruct model for vision analysis.
+   The tests use built-in AI API (https://llmapi.paratera.com) with Qwen2.5-VL-72B-Instruct model for vision analysis.
 
 ## Running Tests
 
@@ -83,6 +84,7 @@ python frontend_ui_test.py
 | 3 | Login with correct credentials | POST /login |
 | 4 | Login with incorrect password | POST /login |
 | 5 | Register existing username | POST /register |
+| 6 | Register with empty fields | POST /register |
 
 ### Frontend Tests (`frontend_ui_test.py`)
 
@@ -95,6 +97,7 @@ python frontend_ui_test.py
 | 5 | Login with correct credentials | ✓ Success state |
 | 6 | Welcome screen | ✓ "Welcome" message |
 | 7 | Login with incorrect password | ✓ "Incorrect password" error |
+| 8 | Register with empty fields | ✓ "Username and password are required" error |
 
 ## AI Vision Analysis
 
@@ -219,6 +222,30 @@ All screenshots are saved to `test/screenshots/` with timestamps:
 
 ## Troubleshooting
 
+### Python 3.13 Compatibility Issues
+
+If you're using Python 3.13, you may encounter compilation errors for certain packages.
+
+**Quick Fix:**
+```bash
+# Upgrade pip and setuptools first
+pip install --upgrade pip setuptools wheel
+```
+
+**Alternative: Use Virtual Environment:**
+```bash
+# Create virtual environment
+python -m venv venv
+
+# Activate (Windows)
+venv\Scripts\activate
+
+# Activate (Linux/Mac)
+source venv/bin/activate
+```
+
+For more detailed troubleshooting, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
+
 ### Port Already in Use
 
 ```
@@ -317,10 +344,10 @@ assert not has_error, f"Unexpected error: {error_msg}"
 ## Dependencies
 
 ```
-requests==2.31.0       # HTTP client for backend tests
-pytest==7.4.3           # Test framework
-pytest-asyncio==0.21.1  # Async support for pytest
-playwright==1.40.0      # Browser automation
+requests>=2.31.0       # HTTP client for backend tests
+pytest>=8.0.0           # Test framework
+pytest-asyncio>=0.23.0  # Async support for pytest
+playwright>=1.42.0      # Browser automation
 ```
 
 ## Security Notes

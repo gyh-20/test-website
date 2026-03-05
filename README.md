@@ -22,7 +22,8 @@ test/
 │   ├── run_tests.sh         # Linux/Mac test runner
 │   ├── run_tests.bat        # Windows test runner
 │   ├── screenshots/         # Test screenshots (generated)
-│   └── README.md           # Test documentation
+│   ├── README.md           # Test documentation
+│   └── TROUBLESHOOTING.md # Troubleshooting guide
 ├── TESTCASES.md             # Test cases documentation
 └── README.md                # This file
 ```
@@ -104,11 +105,21 @@ Registers a new user.
 }
 ```
 
-**Error Response (409 Conflict):**
+**Error Responses:**
+
+- **409 Conflict** - Username already exists:
 ```json
 {
   "success": false,
   "message": "Username already exists"
+}
+```
+
+- **400 Bad Request** - Empty username or password:
+```json
+{
+  "success": false,
+  "message": "Username and password are required"
 }
 ```
 
@@ -218,11 +229,12 @@ See [test/README.md](test/README.md) for more details on automated testing.
 
 1. Ensure the backend is running (`python backend/app.py`)
 2. Open `frontend/index.html` in your browser
-3. Test the three main scenarios:
+3. Test the main scenarios:
    - Try logging in with unregistered credentials
    - Register a new user
    - Log in with correct credentials
    - Log in with incorrect password
+   - Try to register with empty fields
 
 ### Manual API Testing (curl)
 
@@ -243,6 +255,9 @@ curl -X POST http://localhost:5000/login -H "Content-Type: application/json" -d 
 
 # Scenario 5: Register existing username
 curl -X POST http://localhost:5000/register -H "Content-Type: application/json" -d '{"username":"testuser","password":"anotherpass"}'
+
+# Scenario 6: Register with empty fields
+curl -X POST http://localhost:5000/register -H "Content-Type: application/json" -d '{"username":"","password":""}'
 ```
 
 ## Important Notes
@@ -271,6 +286,7 @@ All test cases from `TESTCASES.md` have been verified:
 | Login with incorrect password | ✅ Pass - Returns "Incorrect password" |
 | Register new user | ✅ Pass - Creates user successfully |
 | Register existing username | ✅ Pass - Returns "Username already exists" |
+| Register with empty fields | ✅ Pass - Returns "Username and password are required" |
 
 ## Troubleshooting
 
@@ -290,4 +306,7 @@ All test cases from `TESTCASES.md` have been verified:
 
 **Tests fail with AI API errors:**
 - Check that the AI API is accessible: `curl https://llmapi.paratera.com`
-- Verify network connection to the API server
+- Verify your network connection to the API server
+
+**Python 3.13 compatibility issues:**
+See [test/TROUBLESHOOTING.md](test/TROUBLESHOOTING.md) for detailed solutions to common Python 3.13 issues.
