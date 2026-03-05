@@ -13,8 +13,8 @@ from playwright.async_api import async_playwright
 
 # Configuration
 FRONTEND_URL = "http://localhost:8000"
-# Use relative path for screenshots
-SCREENSHOT_DIR = "test/screenshots"
+# Use relative path for screenshots (relative to test directory)
+SCREENSHOT_DIR = "screenshots"
 
 # API Configuration
 API_KEY = os.environ.get("AI_API_KEY", "sk-S5Ii_8ha06_YSq_fhj3_-Q")
@@ -40,6 +40,18 @@ def analyze_screenshot_with_ai(screenshot_path):
     Returns: (has_error: bool, error_message: str)
     """
     try:
+        # Wait for file to exist and be readable
+        import time
+        for _ in range(10):  # Wait up to 1 second for file to be ready
+            if os.path.exists(screenshot_path):
+                try:
+                    with open(screenshot_path, "rb") as f:
+                        f.read(1)  # Try to read 1 byte to verify file is ready
+                    break
+                except (IOError, OSError):
+                    pass
+            time.sleep(0.1)
+
         # Read and encode image
         with open(screenshot_path, "rb") as f:
             image_data = f.read()
@@ -191,7 +203,7 @@ async def test_frontend_ui():
         print("\n[Test 3] Switching to registration form...")
         await page.click('#showRegister')
         await page.wait_for_timeout(500)
-        # Wait for the registration form to be visible
+        # Wait for registration form to be visible
         await page.wait_for_selector('#registerForm', state='visible')
         screenshot_path = take_screenshot(page, "03_register_form")
         has_error, error_msg = analyze_screenshot_with_ai(screenshot_path)
@@ -277,7 +289,7 @@ async def test_frontend_ui():
         print("\n[Test 8] Testing registration with empty fields...")
         await page.click('#showRegister')
         await page.wait_for_timeout(500)
-        # Wait for the registration form to be visible
+        # Wait for registration form to be visible
         await page.wait_for_selector('#registerForm', state='visible')
         await page.fill('#registerUsername', '')
         await page.fill('#registerPassword', '')
