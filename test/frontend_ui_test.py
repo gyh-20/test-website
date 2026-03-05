@@ -202,7 +202,10 @@ async def test_frontend_ui():
         await page.fill('#registerUsername', 'testuser')
         await page.fill('#registerPassword', 'testpass123')
         await page.click('button[type="submit"]')
-        await page.wait_for_timeout(1000)
+        # Wait longer for registration to complete and potential alert
+        await page.wait_for_timeout(2000)
+        # Dismiss any alert that might appear
+        page.on("dialog", lambda dialog: dialog.accept())
         screenshot_path = take_screenshot(page, "04_register_success")
         has_error, error_msg = analyze_screenshot_with_ai(screenshot_path)
 
@@ -215,6 +218,9 @@ async def test_frontend_ui():
 
         # Test 5: Login with correct credentials (Scenario 2)
         print("\n[Test 5] Login with correct credentials...")
+        # Make sure we're on login form
+        await page.goto(FRONTEND_URL)
+        await page.wait_for_timeout(500)
         await page.fill('#loginUsername', 'testuser')
         await page.fill('#loginPassword', 'testpass123')
         await page.click('button[type="submit"]')
