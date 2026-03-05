@@ -15,6 +15,14 @@ test/
 │   ├── script.ts            # TypeScript source
 │   ├── script.js            # Compiled JavaScript
 │   └── tsconfig.json        # TypeScript config
+├── test/
+│   ├── backend_api_test.py  # Backend API tests
+│   ├── frontend_ui_test.py  # Frontend UI tests with AI vision
+│   ├── requirements.txt     # Test dependencies
+│   ├── run_tests.sh         # Linux/Mac test runner
+│   ├── run_tests.bat        # Windows test runner
+│   ├── screenshots/         # Test screenshots (generated)
+│   └── README.md           # Test documentation
 ├── TESTCASES.md             # Test cases documentation
 └── README.md                # This file
 ```
@@ -151,7 +159,53 @@ or
    - Log in with correct credentials
    - Log in with incorrect password
 
-### Automated Testing (curl)
+### Automated Testing
+
+#### One-Click Test Suite
+
+Run all tests (both backend API and frontend UI) with a single command:
+
+**Windows:**
+```bash
+test\run_tests.bat
+```
+
+**Linux/Mac:**
+```bash
+chmod +x test/run_tests.sh
+./test/run_tests.sh
+```
+
+The test suite will:
+- Install all dependencies automatically
+- Start backend and frontend servers
+- Run backend API tests (pytest)
+- Run frontend UI tests (Playwright with AI vision)
+- Capture screenshots for visual verification
+- Display detailed test results
+
+#### Frontend AI Vision Testing
+
+The frontend tests use Claude Vision to analyze screenshots and verify:
+- Error messages are displayed correctly (red text, error banners)
+- Success states show proper UI (welcome message, green indicators)
+- Page transitions work as expected
+
+To enable AI vision analysis, set your Anthropic API key:
+```bash
+# Windows CMD
+set ANTHROPIC_API_KEY=your_api_key_here
+
+# Windows PowerShell
+$env:ANTHROPIC_API_KEY="your_api_key_here"
+
+# Linux/Mac
+export ANTHROPIC_API_KEY=your_api_key_here
+```
+
+See [test/README.md](test/README.md) for more details on automated testing.
+
+#### Manual API Testing (curl)
 
 Make sure the backend is running, then execute:
 

@@ -30,3 +30,10 @@ Thumbs.db
 # Environment variables
 .env
 .env.local
+
+# Test artifacts
+test/screenshots/*.png
+test/screenshots/*.jpg
+test/backend.log
+test/frontend.log
+test/*.log

@@ -77,9 +77,21 @@ def login():
         return jsonify({"success": False, "message": f"Server error: {str(e)}"}), 500
 
 
+@app.route('/reset_users', methods=['POST'])
+def reset_users():
+    """
+    Reset the users dictionary (for testing purposes).
+    This endpoint should only be used in testing environments.
+    """
+    global users
+    users.clear()
+    return jsonify({"success": True, "message": "Users reset"}), 200
+
+
 if __name__ == '__main__':
     print("Starting Flask server on http://localhost:5000")
     print("Endpoints:")
     print("  POST /register  - Register a new user")
     print("  POST /login     - Authenticate a user")
+    print("  POST /reset_users - Reset user database (testing only)")
     app.run(debug=True, host='0.0.0.0', port=5000)
